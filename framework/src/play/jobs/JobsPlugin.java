@@ -168,8 +168,13 @@ public class JobsPlugin extends PlayPlugin {
                     if (value.startsWith("cron.")) {
                         value = Play.configuration.getProperty(value);
                     }
+                    //Strip off #comments if exists
+                    value = value.replaceAll("#.*$", "");
                     value = Expression.evaluate(value, value).toString();
-                    if(!"never".equalsIgnoreCase(value)){
+                    if (value == null || "".equals(value) || "never".equalsIgnoreCase(value)) {
+                        Logger.info("Skipping job %s, cron expression is not defined", job.getClass().getName());
+                    }
+                    else{
                         executor.scheduleWithFixedDelay(job, Time.parseDuration(value), Time.parseDuration(value), TimeUnit.SECONDS);
                     }
                 } catch (InstantiationException ex) {
@@ -195,6 +200,8 @@ public class JobsPlugin extends PlayPlugin {
         if (cron.startsWith("cron.")) {
             cron = Play.configuration.getProperty(cron);
         }
+        //Strip off #comments if exists
+        cron = cron.replaceAll("#.*$", "");
         cron = Expression.evaluate(cron, cron).toString();
         if (cron == null || "".equals(cron) || "never".equalsIgnoreCase(cron)) {
             Logger.info("Skipping job %s, cron expression is not defined", job.getClass().getName());

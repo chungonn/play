@@ -3,14 +3,15 @@ package play.libs;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.mail.Email;
 import org.apache.commons.mail.EmailException;
-import play.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import play.Play;
 import play.exceptions.MailException;
 
 import javax.mail.*;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Date;
 import java.util.HashMap;
@@ -23,6 +24,8 @@ import java.util.concurrent.*;
  */
 public class Mail {
 
+	private static Logger logger = LoggerFactory.getLogger("play.Mail");
+	
     public static Session session;
     public static boolean asynchronousSend = true;
 
@@ -34,34 +37,34 @@ public class Mail {
         try {
             email = buildMessage(email);
 
-            if (Play.configuration.getProperty("mail.smtp", "").equals("mock") && Play.mode == Play.Mode.DEV) {
-                Mock.send(email);
-                return new Future<Boolean>() {
-
-                    public boolean cancel(boolean mayInterruptIfRunning) {
-                        return false;
-                    }
-
-                    public boolean isCancelled() {
-                        return false;
-                    }
-
-                    public boolean isDone() {
-                        return true;
-                    }
-
-                    public Boolean get() throws InterruptedException, ExecutionException {
-                        return true;
-                    }
-
-                    public Boolean get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
-                        return true;
-                    }
-                };
+            if (Play.configuration.getProperty("mail.smtp", "").equals("prod")) {
+            	email.setMailSession(getSession());
+            	return sendMessage(email);
             }
 
-            email.setMailSession(getSession());
-            return sendMessage(email);
+            Mock.send(email);
+            return new Future<Boolean>() {
+            	
+            	public boolean cancel(boolean mayInterruptIfRunning) {
+            		return false;
+            	}
+            	
+            	public boolean isCancelled() {
+            		return false;
+            	}
+            	
+            	public boolean isDone() {
+            		return true;
+            	}
+            	
+            	public Boolean get() throws InterruptedException, ExecutionException {
+            		return true;
+            	}
+            	
+            	public Boolean get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+            		return true;
+            	}
+            };
         } catch (EmailException ex) {
             throw new MailException("Cannot send email", ex);
         }
@@ -147,7 +150,7 @@ public class Mail {
                 try {
                     session = Session.getInstance(props, (Authenticator) Play.classloader.loadClass(authenticator).newInstance());
                 } catch (Exception e) {
-                    Logger.error(e, "Cannot instanciate custom SMTP authenticator (%s)", authenticator);
+                    logger.error("Cannot instanciate custom SMTP authenticator ({})", authenticator, e);
                 }
             }
 
@@ -184,7 +187,7 @@ public class Mail {
                         return true;
                     } catch (Throwable e) {
                         MailException me = new MailException("Error while sending email", e);
-                        Logger.error(me, "The email has not been sent");
+                        logger.error("The email has not been sent", me);
                         return false;
                     }
                 }
@@ -196,7 +199,7 @@ public class Mail {
                 msg.send();
             } catch (Throwable e) {
                 MailException me = new MailException("Error while sending email", e);
-                Logger.error(me, "The email has not been sent");
+                logger.error("The email has not been sent", me);
                 result.append("oops");
             }
             return new Future<Boolean>() {
@@ -331,7 +334,7 @@ public class Mail {
                 content.append("\n\t" + body);
 
                 content.append("\n");
-                Logger.info(content.toString());
+                logger.info(content.toString());
 
                 for (Object add : email.getToAddresses()) {
                     content.append(", " + add.toString());
@@ -339,7 +342,7 @@ public class Mail {
                 }
 
             } catch (Exception e) {
-                Logger.error(e, "error sending mock email");
+                logger.error("error sending mock email",e);
             }
 
         }
