@@ -65,8 +65,10 @@ try:
 
     play_env["version"] = open(play_version_file).readline().strip()
 
-    if showLogo:
-        print "~ play! %s, http://www.playframework.org" % (play_env["version"])
+    #if showLogo:
+    #    print "~ play! %s, http://www.playframework.org" % (play_env["version"])
+    print "~ version %s " % (play_env["version"])
+
 
     # ~~~~~~~~~~~~~~~~~~~~~~ Where is the application?
     application_path = None
@@ -112,10 +114,10 @@ try:
         if not isTestFrameworkId( play_env["id"] ): 
             play_env["id"] = 'test'
 
-    if showLogo:
-        if play_env["id"] is not '':
-            print "~ framework ID is %s" % play_env["id"]
-        print "~"
+    #if showLogo:
+    if play_env["id"] is not '':
+        print "~ framework ID is %s" % play_env["id"]
+    print "~"
 
     # ~~~~~~~~~~~~~~~~~ Checking for disable_check_jpda
     disable_check_jpda = False
