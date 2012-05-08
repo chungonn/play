@@ -7,6 +7,7 @@ import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import javax.sql.DataSource;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -27,9 +28,15 @@ import play.mvc.Http.Response;
 import play.mvc.results.Redirect;
 import play.vfs.VirtualFile;
 
+/**
+ * Handles migration of data.
+ *
+ * Does only support the default DBConfig
+ */
 public class Evolutions extends PlayPlugin {
+	
 
-    public static void main(String[] args) {
+  	public static void main(String[] args) throws SQLException {
 
         /** Check that evolutions are enabled **/
         if (!evolutionsDirectory.exists()) {
@@ -51,7 +58,7 @@ public class Evolutions extends PlayPlugin {
         new DBPlugin().onApplicationStart();
 
         /** Connected **/
-        System.out.println("~ Connected to " + ((ComboPooledDataSource) DB.datasource).getJdbcUrl());
+        System.out.println("~ Connected to " + DB.datasource.getConnection().getMetaData().getURL());
 
         /** Sumary **/
         Evolution database = listDatabaseEvolutions().peek();
@@ -272,7 +279,7 @@ public class Evolutions extends PlayPlugin {
                     SQLException ex = (SQLException) e;
                     message += " [ERROR:" + ex.getErrorCode() + ", SQLSTATE:" + ex.getSQLState() + "]";
                 }
-                PreparedStatement ps = connection.prepareStatement("update play_evolutions set last_problem = ? where id = ?");
+                PreparedStatement ps = connection.prepareStatement("update play_evolutions set last_problem = ?1 where id = ?2");
                 ps.setString(1, message);
                 ps.setInt(2, applying);
                 ps.execute();
