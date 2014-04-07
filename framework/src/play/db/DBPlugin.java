@@ -336,6 +336,12 @@ public class DBPlugin extends PlayPlugin {
         public boolean jdbcCompliant() {
             return this.driver.jdbcCompliant();
         }
+
+       @Override
+	public java.util.logging.Logger getParentLogger() throws java.sql.SQLFeatureNotSupportedException {
+	   return null;
+	}
+
     }
 
     public static class PlayConnectionCustomizer implements ConnectionCustomizer {
